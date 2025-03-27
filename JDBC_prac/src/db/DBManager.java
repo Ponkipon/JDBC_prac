@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import models.Book;
 import models.User;
 
 public class DBManager {
@@ -44,8 +45,11 @@ public class DBManager {
                 + "available BOOLEAN DEFAULT 1);";
 
         String borrowedBooksTable = "CREATE TABLE IF NOT EXISTS borrowed_books ("
-                + "user_id INTEGER, "
-                + "book_id INTEGER, "
+        		+ "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "user_id INTEGER NOT NULL, "
+                + "book_id INTEGER NOT NULL, "
+                + "borrow_date TEXT DEFAULT CURRENT_TIMESTAMP, "
+                + "return_date TEXT, "
                 + "FOREIGN KEY(user_id) REFERENCES users(id), "
                 + "FOREIGN KEY(book_id) REFERENCES books(id));";
 
@@ -79,21 +83,21 @@ public class DBManager {
     }
 
     public static void addBook(String title, String author, int year, String isbn) {
-        String sql = "INSERT INTO books(title, author, year, isbn, available) VALUES(?, ?, ?, ?, 1)";
-    
+        String query = "INSERT INTO books (title, author, year, isbn) VALUES (?, ?, ?, ?)";
+
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
             pstmt.setString(1, title);
             pstmt.setString(2, author);
             pstmt.setInt(3, year);
             pstmt.setString(4, isbn);
             pstmt.executeUpdate();
-            System.out.println("Book added successfully.");
+
         } catch (SQLException e) {
-            System.out.println("Error adding book: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    
 
     // R in CRUD - Read da suka
     public static List<User> getAllUsers() {
@@ -121,84 +125,116 @@ public class DBManager {
         return userList;
     }
 
-    public static void getAllBooks() {
-        String sql = "SELECT * FROM books";
-    
+    public static List<Book> getAllBooks() {
+        List<Book> bookList = new ArrayList<>();
+        String query = "SELECT books.*, " +
+                "(SELECT COUNT(*) FROM borrowed_books WHERE borrowed_books.book_id = books.id AND borrowed_books.return_date IS NULL) AS borrowed " +
+                "FROM books";
+
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-    
-            System.out.println("Books:");
+             ResultSet rs = stmt.executeQuery(query)) {
+
             while (rs.next()) {
-                System.out.println(rs.getInt("id") + " | " +
-                        rs.getString("title") + " | " +
-                        rs.getString("author") + " | " +
-                        rs.getInt("year") + " | " +
-                        rs.getString("isbn") + " | " +
-                        (rs.getBoolean("available") ? "Available" : "Borrowed"));
+                Book book = new Book(
+                    rs.getInt("id"),
+                    rs.getString("title"),
+                    rs.getString("author"),
+                    rs.getInt("year"),
+                    rs.getString("isbn"),
+                    rs.getInt("borrowed") > 0
+                );
+                bookList.add(book);
             }
+
         } catch (SQLException e) {
-            System.out.println("Error retrieving books: " + e.getMessage());
+            e.printStackTrace();
         }
+        return bookList;
     }
-    
 
     // U in CRUD - Update nahui
-    public static void updateUser(int id, String newEmail, String newPhone) {
-        String sql = "UPDATE users SET email = ?, phone = ? WHERE id = ?";
-    
+    public static void updateUser(int id, String firstName, String lastName, String email, String phone) {
+        String query = "UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ?";
+
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, newEmail);
-            pstmt.setString(2, newPhone);
-            pstmt.setInt(3, id);
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("User updated successfully.");
-            } else {
-                System.out.println("User not found.");
-            }
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, firstName);
+            pstmt.setString(2, lastName);
+            pstmt.setString(3, email);
+            pstmt.setString(4, phone);
+            pstmt.setInt(5, id);
+            pstmt.executeUpdate();
+
         } catch (SQLException e) {
-            System.out.println("Error updating user: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public static void updateBookAvailability(int bookId, boolean isAvailable) {
-        String sql = "UPDATE books SET available = ? WHERE id = ?";
-    
+
+    public static void updateBook(int id, String title, String author, int year, String isbn) {
+        String query = "UPDATE books SET title = ?, author = ?, year = ?, isbn = ? WHERE id = ?";
+
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setBoolean(1, isAvailable);
-            pstmt.setInt(2, bookId);
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Book availability updated.");
-            } else {
-                System.out.println("Book not found.");
-            }
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, title);
+            pstmt.setString(2, author);
+            pstmt.setInt(3, year);
+            pstmt.setString(4, isbn);
+            pstmt.setInt(5, id);
+            pstmt.executeUpdate();
+
         } catch (SQLException e) {
-            System.out.println("Error updating book availability: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
+    public static void borrowBook(int bookId, int userId) {
+        String query = "INSERT INTO borrowed_books (book_id, user_id) VALUES (?, ?)";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, bookId);
+            pstmt.setInt(2, userId);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void returnBook(int bookId) {
+        String query = "UPDATE borrowed_books SET return_date = CURRENT_TIMESTAMP WHERE book_id = ? AND return_date IS NULL";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, bookId);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     // D in CRUD - Delete ebat'
     public static void deleteUser(int id) {
-        String sql = "DELETE FROM users WHERE id = ?";
-    
+        String query = "DELETE FROM users WHERE id = ?";
+
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
             pstmt.setInt(1, id);
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("User deleted.");
-            } else {
-                System.out.println("User not found.");
-            }
+            pstmt.executeUpdate();
+
         } catch (SQLException e) {
-            System.out.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
+    
     public static void deleteBook(int id) {
         String sql = "DELETE FROM books WHERE id = ?";
     
@@ -215,22 +251,10 @@ public class DBManager {
             System.out.println("Error deleting book: " + e.getMessage());
         }
     }
-    
+
 
     public static void main(String[] args) {
         connect();
         createTables();
-
-        // Testing
-        addUser("Alice", "Johnson", "alice@example.com", "123-456-7890");
-        addUser("Bob", "Smith", "bob@example.com", "987-654-3210");
-        addBook("The Great Gatsby", "F. Scott Fitzgerald", 1925, "9780743273565");
-        addBook("1984", "George Orwell", 1949, "9780451524935");
-        getAllUsers();
-        getAllBooks();
-        updateUser(1, "alice.new@example.com", "555-555-5555");
-        updateBookAvailability(1, false);
-        deleteUser(2);
-        deleteBook(2);
     }
 }

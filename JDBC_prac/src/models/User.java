@@ -1,4 +1,4 @@
-package models; // If you place this inside a 'models' package
+package models; 
 
 public class User {
     private int id;
@@ -23,11 +23,11 @@ public class User {
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
 
-    // Setters
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-    public void setEmail(String email) { this.email = email; }
-    public void setPhone(String phone) { this.phone = phone; }
+//    // Setters
+//    public void setFirstName(String firstName) { this.firstName = firstName; }
+//    public void setLastName(String lastName) { this.lastName = lastName; }
+//    public void setEmail(String email) { this.email = email; }
+//    public void setPhone(String phone) { this.phone = phone; }
 
     @Override
     public String toString() {
