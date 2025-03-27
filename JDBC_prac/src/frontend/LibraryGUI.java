@@ -83,7 +83,7 @@ public class LibraryGUI extends JFrame {
         userModel.setRowCount(0);
         loadUsers();
     }
-    // 
+    // See User class in models package for model properties. Backend function is getAllUsers in DBManager class in backend package.
     private void loadUsers() {
         List<User> users = DBManager.getAllUsers(); // Fetch users from DB
         for (User user : users) {
@@ -163,7 +163,7 @@ public class LibraryGUI extends JFrame {
                 emailField.getText().trim(), 
                 phoneField.getText().trim());
 
-            refreshUserTable(); // Reload the table after update
+            refreshUserTable();
         }
     }
 
@@ -181,7 +181,7 @@ public class LibraryGUI extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION) {
             DBManager.deleteUser(userId);
-            refreshUserTable(); // Reload table after deletion
+            refreshUserTable(); 
         }
     }
 
@@ -190,7 +190,6 @@ public class LibraryGUI extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // Table for books
         String[] columnNames = {"ID", "Title", "Author", "Year", "ISBN", "Borrowed"};
         bookModel = new DefaultTableModel(columnNames, 0);
         bookTable = new JTable(bookModel);
@@ -199,7 +198,6 @@ public class LibraryGUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(bookTable);
         panel.add(scrollPane);
 
-        // Buttons panel
         JPanel buttonPanel = new JPanel();
 
         JButton addBookButton = new JButton("Add Book");
@@ -233,7 +231,7 @@ public class LibraryGUI extends JFrame {
         loadBooks();
         return panel;
     }
-    
+    // see Book class in models package for model info. Backend function is getAllBooks in DBManager in backend package.
     private void loadBooks() {
         for (Book book : DBManager.getAllBooks()) {
             bookModel.addRow(new Object[]{
@@ -320,14 +318,14 @@ public class LibraryGUI extends JFrame {
         }
 
         int bookId = (int) bookModel.getValueAt(selectedRow, 0);
-        boolean isBorrowed = (bookModel.getValueAt(selectedRow, 5) == "Yes") ? true : false; // Borrowed column
+        boolean isBorrowed = (bookModel.getValueAt(selectedRow, 5) == "Yes") ? true : false; // checks if there's a "yes" or a "no" in the cell, and converts it to boolean cuz in SQL table it's a bool value
 
         if (isBorrowed) {
             JOptionPane.showMessageDialog(null, "This book is already borrowed!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Select user to borrow the book
+        // User selection menu modal window to borrow the book
         List<User> users = DBManager.getAllUsers();
         String[] userNames = users.stream().map(u -> u.getId() + " - " + u.getFirstName() + " " + u.getLastName()).toArray(String[]::new);
         String selectedUser = (String) JOptionPane.showInputDialog(null, "Select a user:", "Borrow Book",
@@ -348,7 +346,7 @@ public class LibraryGUI extends JFrame {
         }
 
         int bookId = (int) bookModel.getValueAt(selectedRow, 0);
-        boolean isBorrowed = (bookModel.getValueAt(selectedRow, 5) == "Yes") ? true : false; // Borrowed column
+        boolean isBorrowed = (bookModel.getValueAt(selectedRow, 5) == "Yes") ? true : false; // checks if there's a "yes" or a "no" in the cell, and converts it to boolean cuz in SQL table it's a bool value
 
         if (!isBorrowed) {
             JOptionPane.showMessageDialog(null, "This book is not borrowed!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -381,7 +379,10 @@ public class LibraryGUI extends JFrame {
     }
 
     public static void main(String[] args) {
+    	// See themeManager class. Used FlatLAF for Themes.
         ThemeManager.applyTheme();
+        
+        // the window is drawn here
         SwingUtilities.invokeLater(() -> {
             LibraryGUI app = new LibraryGUI();
             app.setVisible(true);

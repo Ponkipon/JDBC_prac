@@ -8,7 +8,7 @@ public class Book {
     private String isbn;
     private boolean borrowed;
     
-    // Constructor
+    // that's all you need to create the object. gotta make another constructor if you don't need smth hehehe
     public Book(int id, String title, String author, int year, String isbn, boolean borrowed) {
         this.id = id;
         this.title = title;

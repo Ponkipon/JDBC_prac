@@ -11,7 +11,8 @@ import java.util.List;
 
 import models.Book;
 import models.User;
-
+// You need to run this Java file before first start to create DB file and build tables.
+// SQLite-JDBC lib is used for db Connection. data storage path is set in DB_URL var. See JDBC doc for info on queries.
 public class DBManager {
     private static final String DB_URL = "jdbc:sqlite:database/library.db"; 
 
@@ -125,6 +126,7 @@ public class DBManager {
         return userList;
     }
 
+    // returns an Array of Book objects from models package.
     public static List<Book> getAllBooks() {
         List<Book> bookList = new ArrayList<>();
         String query = "SELECT books.*, " +
@@ -191,6 +193,15 @@ public class DBManager {
         }
     }
     
+    // pass the userId and bookId to add the book into borrowed_books table. Borrow_date creates automatically
+    // borrowed_books table contains:
+    // 	id INTEGER PRIMARY KEY AUTOINCREMENT
+	// 	user_id INTEGER NOT NULL
+	// 	book_id INTEGER NOT NULL
+	// 	borrow_date TEXT DEFAULT CURRENT_TIMESTAMP
+	// 	return_date TEXT
+	// 	FOREIGN KEY(user_id) REFERENCES users(id)
+	// 	FOREIGN KEY(book_id) REFERENCES books(id))
     public static void borrowBook(int bookId, int userId) {
         String query = "INSERT INTO borrowed_books (book_id, user_id) VALUES (?, ?)";
 
@@ -205,7 +216,7 @@ public class DBManager {
             e.printStackTrace();
         }
     }
-
+    // adds return_date to the selected row, because of sql query filtering in getAllBooks basically makes the book returned.
     public static void returnBook(int bookId) {
         String query = "UPDATE borrowed_books SET return_date = CURRENT_TIMESTAMP WHERE book_id = ? AND return_date IS NULL";
 

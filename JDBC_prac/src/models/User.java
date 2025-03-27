@@ -7,7 +7,7 @@ public class User {
     private String email;
     private String phone;
 
-    // Constructor
+    // that's all you need to create the object. gotta make another constructor if you don't need smth hehehe
     public User(int id, String firstName, String lastName, String email, String phone) {
         this.id = id;
         this.firstName = firstName;
@@ -23,7 +23,7 @@ public class User {
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
 
-//    // Setters
+//    // Setters, useless really.
 //    public void setFirstName(String firstName) { this.firstName = firstName; }
 //    public void setLastName(String lastName) { this.lastName = lastName; }
 //    public void setEmail(String email) { this.email = email; }
