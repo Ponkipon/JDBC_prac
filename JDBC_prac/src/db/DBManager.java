@@ -6,6 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import models.User;
 
 public class DBManager {
     private static final String DB_URL = "jdbc:sqlite:database/library.db"; 
@@ -92,24 +96,29 @@ public class DBManager {
     
 
     // R in CRUD - Read da suka
-    public static void getAllUsers() {
-    String sql = "SELECT * FROM users";
+    public static List<User> getAllUsers() {
+        List<User> userList = new ArrayList<>();
+        String query = "SELECT * FROM users";
 
-    try (Connection conn = connect();
-         Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
 
-        System.out.println("Users:");
-        while (rs.next()) {
-            System.out.println(rs.getInt("id") + " | " +
-                    rs.getString("first_name") + " " +
-                    rs.getString("last_name") + " | " +
-                    rs.getString("email") + " | " +
-                    rs.getString("phone"));
+            while (rs.next()) {
+                User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("email"),
+                    rs.getString("phone")
+                );
+                userList.add(user);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        System.out.println("Error retrieving users: " + e.getMessage());
-    }
+        return userList;
     }
 
     public static void getAllBooks() {
