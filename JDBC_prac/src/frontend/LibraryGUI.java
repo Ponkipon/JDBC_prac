@@ -1,6 +1,5 @@
-package gui;
+package frontend;
 
-import db.DBManager;
 import models.Book;
 import models.User;
 
@@ -9,6 +8,8 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import backend.DBManager;
 
 public class LibraryGUI extends JFrame {
 	private JTable userTable;
@@ -28,17 +29,15 @@ public class LibraryGUI extends JFrame {
     private void initUI() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Create panels for Users and Books
         JPanel userPanel = createUserPanel();
         userPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         JPanel bookPanel = createBookPanel();
         bookPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Add tabs
+        
         tabbedPane.addTab("Users", userPanel);
         tabbedPane.addTab("Books", bookPanel);
 
-        // Add tabbedPane to frame
         add(tabbedPane);
     }
 
@@ -46,7 +45,6 @@ public class LibraryGUI extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // Table for users
         String[] columnNames = {"ID", "First Name", "Last Name", "Email", "Phone"};
         userModel = new DefaultTableModel(columnNames, 0);
         userTable = new JTable(userModel);
@@ -55,7 +53,6 @@ public class LibraryGUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(userTable);
         panel.add(scrollPane);
 
-        // Buttons panel
         JPanel buttonPanel = new JPanel();
 
         JButton addUserButton = new JButton("Add User");
@@ -81,12 +78,12 @@ public class LibraryGUI extends JFrame {
         return panel;
     }
 
-
+    // setRowCount to zero to empty the table, loadUsers makes a new fetch from DB, see the function below.
     private void refreshUserTable() {
-        userModel.setRowCount(0); // Clear existing data
-        loadUsers(); // Reload users
+        userModel.setRowCount(0);
+        loadUsers();
     }
-    
+    // 
     private void loadUsers() {
         List<User> users = DBManager.getAllUsers(); // Fetch users from DB
         for (User user : users) {

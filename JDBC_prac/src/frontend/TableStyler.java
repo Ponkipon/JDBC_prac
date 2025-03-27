@@ -1,4 +1,4 @@
-package gui;
+package frontend;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
