@@ -43,7 +43,7 @@ This is a simple Java-based Library Management System using JDBC and SQLite for 
     -   Run the `LibraryGUI.java` file located in `JDBC_prac/src/frontend/` to launch the application.
 
 ## Project Structure
-
+```
 Library-Management-System/
 ├── .gitignore
 ├── JDBC_prac/
@@ -63,7 +63,7 @@ Library-Management-System/
 │   └── database/
 │       └── library.db (created after running DBManager.java)
 ├── README.md
-
+```
 
 -   `.gitignore`: Specifies intentionally untracked files that Git should ignore.
 -   `JDBC_prac/src/backend/DBManager.java`: Manages the database connection and CRUD operations.
