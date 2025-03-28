@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import models.Book;
+import models.BorrowedBook;
 import models.User;
 // You need to run this Java file before first start to create DB file and build tables.
 // SQLite-JDBC lib is used for db Connection. data storage path is set in DB_URL var. See JDBC doc for info on queries.
@@ -125,6 +126,34 @@ public class DBManager {
         }
         return userList;
     }
+    
+    public static List<User> searchUsers(String keyword) {
+        List<User> userList = new ArrayList<>();
+        String query = "SELECT * FROM users WHERE first_name LIKE ? OR last_name LIKE ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, "%" + keyword + "%");
+            pstmt.setString(2, "%" + keyword + "%");
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("email"),
+                    rs.getString("phone")
+                );
+                userList.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userList;
+    }
+
 
     // returns an Array of Book objects from models package.
     public static List<Book> getAllBooks() {
@@ -154,6 +183,67 @@ public class DBManager {
         }
         return bookList;
     }
+    
+    public static List<BorrowedBook> getBorrowedBooks() {
+        List<BorrowedBook> borrowedBooks = new ArrayList<>();
+        String query = "SELECT b.id, b.title, b.author, u.first_name, u.last_name, br.borrow_date, br.return_date " +
+                       "FROM borrowed_books br " +
+                       "JOIN books b ON br.book_id = b.id " +
+                       "JOIN users u ON br.user_id = u.id";
+
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                BorrowedBook book = new BorrowedBook(
+                    rs.getInt("id"),
+                    rs.getString("title"),
+                    rs.getString("author"),
+                    rs.getString("first_name") + " " + rs.getString("last_name"),
+                    rs.getString("borrow_date"),
+                    rs.getString("return_date")
+                );
+                borrowedBooks.add(book);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return borrowedBooks;
+    }
+
+    public static List<Book> searchBooks(String keyword) {
+        List<Book> bookList = new ArrayList<>();
+        String query = "SELECT books.*, " +
+                "(SELECT COUNT(*) FROM borrowed_books " +
+                " WHERE borrowed_books.book_id = books.id AND borrowed_books.return_date IS NULL) AS borrowed " +
+                "FROM books " +
+                "WHERE title LIKE ? OR isbn LIKE ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, "%" + keyword + "%");
+            pstmt.setString(2, "%" + keyword + "%");
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Book book = new Book(
+                    rs.getInt("id"),
+                    rs.getString("title"),
+                    rs.getString("author"),
+                    rs.getInt("year"),
+                    rs.getString("isbn"),
+                    rs.getInt("borrowed") > 0
+                );
+                bookList.add(book);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookList;
+    }
+
 
     // U in CRUD - Update nahui
     public static void updateUser(int id, String firstName, String lastName, String email, String phone) {

@@ -1,12 +1,17 @@
 package frontend;
 
 import models.Book;
+import models.BorrowedBook;
 import models.User;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 import backend.DBManager;
@@ -16,6 +21,8 @@ public class LibraryGUI extends JFrame {
 	private DefaultTableModel userModel;
 	private JTable bookTable;
 	private DefaultTableModel bookModel;
+	private JTable borrowedBooksTable;
+	private DefaultTableModel borrowedBooksModel;
 	
     public LibraryGUI() {
         setTitle("Bibliotheksverwaltung");
@@ -29,29 +36,57 @@ public class LibraryGUI extends JFrame {
     private void initUI() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        JPanel userPanel = createUserPanel();
-        userPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+        JPanel userPanel = createUserPanel();        
         JPanel bookPanel = createBookPanel();
-        bookPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel borrowedBooksPanel = createBorrowedBooksPanel();
         
         tabbedPane.addTab("Users", userPanel);
         tabbedPane.addTab("Books", bookPanel);
-
+        tabbedPane.addTab("Borrowed Books", borrowedBooksPanel);
+        
         add(tabbedPane);
     }
 
     private JPanel createUserPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel searchPanel = new JPanel(new FlowLayout());
+        JTextField searchField = new JTextField(20);
+
+        searchPanel.add(new JLabel("Search: "));
+        searchPanel.add(searchField);
+        
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            private void performSearch() {
+                String keyword = searchField.getText().trim();
+                if (!keyword.isEmpty()) {
+                    loadSearchedUsers(keyword);
+                } else {
+                    loadUsers(); 
+                }
+            }
+        });
 
         String[] columnNames = {"ID", "First Name", "Last Name", "Email", "Phone"};
         userModel = new DefaultTableModel(columnNames, 0);
         userTable = new JTable(userModel);
-        TableStyler.applyTableStyle(userTable);
-
+        loadUsers(); 
         JScrollPane scrollPane = new JScrollPane(userTable);
-        panel.add(scrollPane);
 
         JPanel buttonPanel = new JPanel();
 
@@ -72,20 +107,27 @@ public class LibraryGUI extends JFrame {
         buttonPanel.add(deleteUserButton);
         buttonPanel.add(refreshButton);
 
-        panel.add(buttonPanel);
-
-        loadUsers();
+        
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
     }
 
-    // setRowCount to zero to empty the table, loadUsers makes a new fetch from DB, see the function below.
+    private void loadSearchedUsers(String keyword) {
+        userModel.setRowCount(0); // Clear table
+        for (User user : DBManager.searchUsers(keyword)) {
+            userModel.addRow(new Object[]{user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhone()});
+        }
+    }
+
     private void refreshUserTable() {
         userModel.setRowCount(0);
         loadUsers();
     }
     // See User class in models package for model properties. Backend function is getAllUsers in DBManager class in backend package.
     private void loadUsers() {
-        List<User> users = DBManager.getAllUsers(); // Fetch users from DB
+        List<User> users = DBManager.getAllUsers(); 
         for (User user : users) {
             userModel.addRow(new Object[]{
                 user.getId(),
@@ -185,19 +227,50 @@ public class LibraryGUI extends JFrame {
         }
     }
 
-    
     private JPanel createBookPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel searchPanel = new JPanel(new FlowLayout());
+        JTextField searchField = new JTextField(20);
+
+        searchPanel.add(new JLabel("Search: "));
+        searchPanel.add(searchField);
+        
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            private void performSearch() {
+                String keyword = searchField.getText().trim();
+                if (!keyword.isEmpty()) {
+                    loadSearchedBooks(keyword);
+                } else {
+                    loadBooks(); 
+                }
+            }
+        });
 
         String[] columnNames = {"ID", "Title", "Author", "Year", "ISBN", "Borrowed"};
         bookModel = new DefaultTableModel(columnNames, 0);
         bookTable = new JTable(bookModel);
         TableStyler.applyTableStyle(bookTable);
-
+        loadBooks(); // Load books into the global model
         JScrollPane scrollPane = new JScrollPane(bookTable);
-        panel.add(scrollPane);
-
+        
+        
+        
         JPanel buttonPanel = new JPanel();
 
         JButton addBookButton = new JButton("Add Book");
@@ -218,6 +291,7 @@ public class LibraryGUI extends JFrame {
         JButton returnBookButton = new JButton("Return Book");
         returnBookButton.addActionListener(e -> returnBook());
 
+        
 
         buttonPanel.add(addBookButton);
         buttonPanel.add(editBookButton);
@@ -226,11 +300,28 @@ public class LibraryGUI extends JFrame {
         buttonPanel.add(borrowBookButton);
         buttonPanel.add(returnBookButton);
 
-        panel.add(buttonPanel);
 
-        loadBooks();
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
     }
+
+    private void loadSearchedBooks(String keyword) {
+        bookModel.setRowCount(0); // Clear table
+        for (Book book : DBManager.searchBooks(keyword)) {
+            bookModel.addRow(new Object[]{
+            		book.getId(),
+            		book.getTitle(), 
+            		book.getAuthor(), 
+            		book.getYear(),
+            		book.getIsbn(), 
+            		(book.isBorrowed()) ? "Yes" : "No"
+        			});
+        }
+    }
+
+
     // see Book class in models package for model info. Backend function is getAllBooks in DBManager in backend package.
     private void loadBooks() {
         for (Book book : DBManager.getAllBooks()) {
@@ -378,11 +469,37 @@ public class LibraryGUI extends JFrame {
     	loadBooks();
     }
 
+    private JPanel createBorrowedBooksPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+
+        String[] columnNames = {"Book ID", "Title", "Author", "Borrower", "Borrow Date", "Return Date"};
+        borrowedBooksModel = new DefaultTableModel(columnNames, 0);
+        borrowedBooksTable = new JTable(borrowedBooksModel);
+        JScrollPane scrollPane = new JScrollPane(borrowedBooksTable);
+        loadBorrowedBooks();
+        
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener(e -> loadBorrowedBooks());
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(refreshButton, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private void loadBorrowedBooks() {
+        borrowedBooksModel.setRowCount(0);
+        for (BorrowedBook book : DBManager.getBorrowedBooks()) {
+            borrowedBooksModel.addRow(new Object[]{book.getId(), book.getTitle(), book.getAuthor(),
+                    book.getBorrowerName(), book.getBorrowDate(), book.getReturnDate()});
+        }
+    }
+
+    
     public static void main(String[] args) {
     	// See themeManager class. Used FlatLAF for Themes.
         ThemeManager.applyTheme();
         
-        // the window is drawn here
         SwingUtilities.invokeLater(() -> {
             LibraryGUI app = new LibraryGUI();
             app.setVisible(true);
