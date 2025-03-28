@@ -352,10 +352,48 @@ public class DBManager {
             System.out.println("Error deleting book: " + e.getMessage());
         }
     }
+    
+    
+    
+    public static void populateDatabase() {
+        // Sample users
+        String[][] users = {
+            {"John", "Doe", "john.doe@example.com", "1234567890"},
+            {"Alice", "Smith", "alice.smith@example.com", "9876543210"},
+            {"Bob", "Johnson", "bob.johnson@example.com", "5647382910"},
+            {"Emily", "Davis", "emily.davis@example.com", "1928374650"},
+            {"Michael", "Brown", "michael.brown@example.com", "1112223333"}
+        };
+
+        // Sample books
+        Object[][] books = {
+            {"The Great Gatsby", "F. Scott Fitzgerald", 1925, "9780743273565"},
+            {"To Kill a Mockingbird", "Harper Lee", 1960, "9780061120084"},
+            {"1984", "George Orwell", 1949, "9780451524935"},
+            {"Pride and Prejudice", "Jane Austen", 1813, "9780141439518"},
+            {"The Hobbit", "J.R.R. Tolkien", 1937, "9780547928227"}
+        };
+
+        System.out.println("Populating database with test data...");
+
+        // Insert users
+        for (String[] user : users) {
+            addUser(user[0], user[1], user[2], user[3]);
+        }
+
+        // Insert books
+        for (Object[] book : books) {
+            addBook((String) book[0], (String) book[1], (int) book[2], (String) book[3]);
+        }
+
+        System.out.println("Database populated successfully!");
+    }
+
 
 
     public static void main(String[] args) {
         connect();
         createTables();
+        // populateDatabase();
     }
 }
